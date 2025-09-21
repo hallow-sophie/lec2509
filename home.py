@@ -13,7 +13,14 @@ api_key = st.secrets.openAI["api_key"]
 client = OpenAI(api_key=api_key)
 
 st.set_page_config(page_title="Image Remix (Streamlit + OpenAI)", page_icon="🎨")
-st.title("업로드한 그림으로 제품을 실사화 해봐요!")
+st.title("직접 제작한 제품 설명과 스케치로 제품의 실사화 모습을 만들어 보아요!")
+contents1 = '''
+📢 주의! 기회는 단... 3번뿐!! 신중히 버튼을 눌러주세요.
+'''
+
+st.write(contents1)
+
+
 
 # --- 기본(숨김) 프롬프트: 코드에만 보관 ---
 BASE_PROMPT = (
@@ -27,8 +34,8 @@ if uploaded:
     st.subheader("원본 미리보기")
     st.image(uploaded, use_container_width=True)
 
-directives = st.text_area("추가 지시문 (선택)", placeholder="예) 우리 제품은 연필과 지우개를 합친 제품이야. 해당 제품에 대해서 실사화를 예쁘게 부탁해.", height=100)
-go = st.button("🖼️ 새 이미지 생성")
+directives = st.text_area("제품 설명을 넣어주세요.", placeholder="예) 우리 제품은 연필과 지우개를 합친 제품이야. 해당 제품에 대해서 실사화를 예쁘게 부탁해.", height=100)
+go = st.button("🖼️ 제품 만들기!")
 
 def pil_to_bytes(img: Image.Image, fmt="PNG") -> io.BytesIO:
     buf = io.BytesIO()
@@ -80,7 +87,7 @@ if st.session_state["results"]:
     for i, b in enumerate(st.session_state["results"], start=1):
         st.image(b, caption=f"Result #{i}", use_container_width=True)
         st.download_button(
-            f"⬇️ 결과 #{i} 저장",
+            f"⬇️ 제품 #{i} 저장!",
             data=b,
             file_name=f"result_{i}.png",
             mime="image/png",

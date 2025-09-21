@@ -13,7 +13,7 @@ api_key = st.secrets.openAI["api_key"]
 client = OpenAI(api_key=api_key)
 
 st.set_page_config(page_title="Image Remix (Streamlit + OpenAI)", page_icon="🎨")
-st.title("🎨 업로드한 그림으로 새 이미지 만들기")
+st.title("업로드한 그림으로 제품을 실사화 해봐요!")
 
 # --- 기본(숨김) 프롬프트: 코드에만 보관 ---
 BASE_PROMPT = (
@@ -27,7 +27,7 @@ if uploaded:
     st.subheader("원본 미리보기")
     st.image(uploaded, use_container_width=True)
 
-directives = st.text_area("추가 지시문 (선택)", placeholder="예) 하늘을 노을색으로 바꾸고 비행선을 추가", height=100)
+directives = st.text_area("추가 지시문 (선택)", placeholder="예) 우리 제품은 연필과 지우개를 합친 제품이야. 해당 제품에 대해서 실사화를 예쁘게 부탁해.", height=100)
 go = st.button("🖼️ 새 이미지 생성")
 
 def pil_to_bytes(img: Image.Image, fmt="PNG") -> io.BytesIO:

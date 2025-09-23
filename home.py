@@ -5,14 +5,19 @@ from PIL import Image
 import streamlit as st
 from openai import OpenAI
 
-# ----------------------------
-# 0) 간단 로그인 가드 (접근코드 방식)
-# ----------------------------
+# 반드시 최상단에서!
+st.set_page_config(page_title="1. 물체와 물질_제품 제작소", page_icon="🎨")
+
+# ---- 전역 rerun 플래그 처리 ----
+if st.session_state.get("_do_rerun", False):
+    st.session_state.pop("_do_rerun", None)
+    st.rerun()
+
 def logout():
     for k in ["authenticated", "username"]:
-        if k in st.session_state:
-            del st.session_state[k]
-    st.experimental_rerun()
+        st.session_state.pop(k, None)
+    # 여기서 직접 rerun() 부르지 말고 플래그만 세우기
+    st.session_state["_do_rerun"] = True
 
 def require_login():
     st.markdown("### 🔐 로그인")
@@ -20,21 +25,22 @@ def require_login():
         username = st.text_input("아이디", placeholder="예: teacher01")
         access_code = st.text_input("접근코드(비밀번호)", type="password")
         ok = st.form_submit_button("로그인")
+
     if ok:
-        # secrets 예시: [auth] shared_password="YOUR_SECRET"
-        expected = st.secrets.get("auth", {}).get("shared_password", None)
+        expected = st.secrets.get("auth", {}).get("shared_password")
         if expected and access_code == expected:
             st.session_state["authenticated"] = True
             st.session_state["username"] = username or "user"
-            st.success("로그인 성공!")
-            st.experimental_rerun()
+            # 여기서도 바로 rerun() 대신 플래그
+            st.session_state["_do_rerun"] = True
         else:
             st.error("접근코드가 올바르지 않습니다.")
 
-    # 로그인 실패/미로그인 시 즉시 중단
-    st.stop()
+    # 로그인 성공 플래그가 생겼다면 다음 루프로 넘기기
+    if not st.session_state.get("authenticated", False):
+        st.stop()  # 미로그인 시 아래 코드 실행 차단
 
-# 세션 인증 체크
+# --- 가드 ---
 if not st.session_state.get("authenticated", False):
     require_login()
 

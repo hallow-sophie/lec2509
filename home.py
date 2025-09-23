@@ -5,52 +5,51 @@ from PIL import Image
 import streamlit as st
 from openai import OpenAI
 
-# 반드시 최상단에서!
 st.set_page_config(page_title="1. 물체와 물질_제품 제작소", page_icon="🎨")
 
-# ---- 전역 rerun 플래그 처리 ----
-if st.session_state.get("_do_rerun", False):
-    st.session_state.pop("_do_rerun", None)
-    st.rerun()
+# 세션 기본값
+st.session_state.setdefault("authenticated", False)
+st.session_state.setdefault("username", None)
+
+# --- 로그인 UI를 비울 수 있는 컨테이너 준비 ---
+login_box = st.empty()
+
+def show_login():
+    with login_box.container():
+        st.markdown("### 🔐 로그인")
+        with st.form("login_form", clear_on_submit=False):
+            username = st.text_input("아이디", placeholder="예: teacher01")
+            access_code = st.text_input("접근코드(비밀번호)", type="password")
+            ok = st.form_submit_button("로그인")
+
+        if ok:
+            expected = st.secrets.get("auth", {}).get("shared_password")
+            if expected and access_code == expected:
+                st.session_state["authenticated"] = True
+                st.session_state["username"] = username or "user"
+                # 🔑 로그인 박스 비우기 → 이후 rerun으로 상단 UI 잔상 제거
+                login_box.empty()
+                st.rerun()
+            else:
+                st.error("접근코드가 올바르지 않습니다.")
 
 def logout():
-    for k in ["authenticated", "username"]:
-        st.session_state.pop(k, None)
-    # 여기서 직접 rerun() 부르지 말고 플래그만 세우기
-    st.session_state["_do_rerun"] = True
+    st.session_state["authenticated"] = False
+    st.session_state["username"] = None
+    st.rerun()
 
-def require_login():
-    st.markdown("### 🔐 로그인")
-    with st.form("login_form", clear_on_submit=False):
-        username = st.text_input("아이디", placeholder="예: teacher01")
-        access_code = st.text_input("접근코드(비밀번호)", type="password")
-        ok = st.form_submit_button("로그인")
+# --- 분기: 미인증이면 로그인만 렌더하고 중단 ---
+if not st.session_state["authenticated"]:
+    show_login()
+    st.stop()
 
-    if ok:
-        expected = st.secrets.get("auth", {}).get("shared_password")
-        if expected and access_code == expected:
-            st.session_state["authenticated"] = True
-            st.session_state["username"] = username or "user"
-            # 여기서도 바로 rerun() 대신 플래그
-            st.session_state["_do_rerun"] = True
-        else:
-            st.error("접근코드가 올바르지 않습니다.")
-
-    # 로그인 성공 플래그가 생겼다면 다음 루프로 넘기기
-    if not st.session_state.get("authenticated", False):
-        st.stop()  # 미로그인 시 아래 코드 실행 차단
-
-# --- 가드 ---
-if not st.session_state.get("authenticated", False):
-    require_login()
-
-# 로그인 이후에만 보이는 UI (로그아웃 버튼 포함)
+# --- 여기부터는 로그인 이후 화면만 보임 ---
 col1, col2 = st.columns([1, 1])
 with col1:
-    st.caption(f"👋 {st.session_state.get('username', 'user')} 님 환영합니다.")
+    st.caption(f"👋 {st.session_state['username']} 님 환영합니다.")
 with col2:
     st.button("로그아웃", on_click=logout, use_container_width=True)
-
+    
 api_key = st.secrets.openAI["api_key"]
 # api_key = os.getenv("OPENAI_API_KEY")
 # if not api_key:

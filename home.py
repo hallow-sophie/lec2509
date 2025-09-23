@@ -50,6 +50,7 @@ def show_login():
                 st.session_state["authenticated"] = True
                 st.session_state["username"] = username
                 login_box.empty()               # 로그인 UI 제거
+                st.rerun()
                 st.session_state["_do_rerun"] = True  # 다음 프레임에서 rerun
             else:
                 st.error("아이디 또는 비밀번호가 올바르지 않습니다.")

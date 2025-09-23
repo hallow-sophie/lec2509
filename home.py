@@ -5,6 +5,46 @@ from PIL import Image
 import streamlit as st
 from openai import OpenAI
 
+# ----------------------------
+# 0) 간단 로그인 가드 (접근코드 방식)
+# ----------------------------
+def logout():
+    for k in ["authenticated", "username"]:
+        if k in st.session_state:
+            del st.session_state[k]
+    st.experimental_rerun()
+
+def require_login():
+    st.markdown("### 🔐 로그인")
+    with st.form("login_form", clear_on_submit=False):
+        username = st.text_input("아이디", placeholder="예: teacher01")
+        access_code = st.text_input("접근코드(비밀번호)", type="password")
+        ok = st.form_submit_button("로그인")
+    if ok:
+        # secrets 예시: [auth] shared_password="YOUR_SECRET"
+        expected = st.secrets.get("auth", {}).get("shared_password", None)
+        if expected and access_code == expected:
+            st.session_state["authenticated"] = True
+            st.session_state["username"] = username or "user"
+            st.success("로그인 성공!")
+            st.experimental_rerun()
+        else:
+            st.error("접근코드가 올바르지 않습니다.")
+
+    # 로그인 실패/미로그인 시 즉시 중단
+    st.stop()
+
+# 세션 인증 체크
+if not st.session_state.get("authenticated", False):
+    require_login()
+
+# 로그인 이후에만 보이는 UI (로그아웃 버튼 포함)
+col1, col2 = st.columns([1, 1])
+with col1:
+    st.caption(f"👋 {st.session_state.get('username', 'user')} 님 환영합니다.")
+with col2:
+    st.button("로그아웃", on_click=logout, use_container_width=True)
+
 api_key = st.secrets.openAI["api_key"]
 # api_key = os.getenv("OPENAI_API_KEY")
 # if not api_key:
